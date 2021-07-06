@@ -1,0 +1,7 @@
+{
+  "name": "plugin-test",
+  "id": "993286088899110889",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html"
+}

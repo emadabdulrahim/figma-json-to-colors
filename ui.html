@@ -1,0 +1,156 @@
+
+<div class="container">
+  <div class="vStack-16">
+    <div>
+      <h2 class="title">Generate Palette</h2>
+      <p>Paste a your colors in any format that you like, JSON, array, or simply a list of values</p>
+    </div>
+    <form class="vStack-16">
+      <div class="vStack-8">
+        <label for="input">Input</label>
+        <textarea id="input" placeholder="JSON here..." rows="14" spellcheck="false"></textarea>
+      </div>
+      <div class="hStack-16">
+        <button class="button--primary" type="submit" id="create">Generate Palette</button>
+        <button class="button--minimal" id="cancel">Cancel</button>
+      </div>
+    </form>
+  </div>
+  <script>
+  
+  document.querySelector('form').onsubmit = (e) => {
+    e.preventDefault();
+    const input = document.getElementById('input');
+    try {
+      const json = JSON.parse(input.value);
+      
+      parent.postMessage({ pluginMessage: { type: 'generate-palette', payload: input.value } }, '*')
+    } catch (error) {
+      const json = JSON.stringify(input.value)
+      const colors = json.match(/(#[\w\d]{6})/ig)
+
+      parent.postMessage({ pluginMessage: { type: 'generate-palette', payload: JSON.stringify(colors) } }, '*')
+    }
+  }
+  
+  document.getElementById('cancel').onclick = () => {
+    parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
+  }
+  
+  </script>
+  <style>
+    body {
+      --text-heading: #11181c;
+      --text-body: #687076;
+
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      --webkit-font-smoothing: antialiased;
+      color: var(--text-body);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    h1, h2, h3, p, form {
+      margin: 0;
+    }
+
+    h2 {
+      color: var(--text-heading);
+    }
+
+    .vStack-16 > * + * {
+      margin-top: 16px;
+    }
+
+    .vStack-8 > * + * {
+      margin-top: 8px;
+    }
+
+    .hStack-16 {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .container {
+      padding: 16px;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      color: var(--text-heading);
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      resize: vertical;
+      font-family: monospace;
+      font-size: 14px;
+      color: var(--text-body);
+      padding: 8px;
+      border-radius: 4px;
+      box-shadow: inset 0 0 0 1px #d7dbdf;
+      border: none;
+    }
+
+    button {
+      display: -webkit-inline-box;
+      display: -ms-inline-flexbox;
+      display: inline-flex;
+      -webkit-box-orient: horizontal;
+      -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+      flex-direction: row;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
+      align-items: center;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
+      justify-content: center;
+      padding: 4px 16px;
+      text-align: left;
+      vertical-align: middle;
+      min-height: 30px;
+      min-width: 30px;
+      outline: none;
+    }
+
+    .button--primary:hover {
+      background-color: #3a5ccc;
+    }
+
+    .button--primary:active {
+      background-color: #3451b2;
+    }
+
+    .button--primary {
+      background-color: #3e63dd;
+      background-image: linear-gradient(180deg,hsla(0,0%,100%,.1),hsla(0,0%,100%,0));
+      -webkit-box-shadow: inset 0 0 0 1px rgb(16 22 26 / 40%), inset 0 -1px 0 rgb(16 22 26 / 20%);
+      box-shadow: inset 0 0 0 1px rgb(16 22 26 / 40%), inset 0 -1px 0 rgb(16 22 26 / 20%);
+      color:#fdfdfe;
+    }
+
+    .button--minimal:hover {
+      background-color: #eceef0;
+    }
+    
+    .button--minimal:active {
+      background-color: #e6e8eb;
+    }
+
+    .button--minimal {
+      color: inherit;
+      background: none;
+      box-shadow: none; 
+    }
+
+  </style>
+</div>
