@@ -35,7 +35,7 @@ function hexToRGB(h) {
 }
 figma.showUI(__html__, {
     width: 500,
-    height: 500,
+    height: 550,
 });
 // Calls to "parent.postMessage" from within the HTML page will trigger this
 // callback. The callback will be passed the "pluginMessage" property of the
@@ -112,18 +112,22 @@ figma.ui.onmessage = (msg) => __awaiter(this, void 0, void 0, function* () {
         const nodes = [];
         yield figma.loadFontAsync({ family: "Roboto", style: "Regular" });
         const frame = figma.createFrame();
-        frame.layoutMode = "VERTICAL";
-        frame.itemSpacing = 40;
+        frame.layoutMode = "HORIZONTAL";
+        frame.itemSpacing = 24;
         frame.fills = [];
-        const height = 150;
+        const height = 100;
         try {
-            const palette = JSON.parse(msg.payload);
-            const isArray = Array.isArray(palette);
-            Object.keys(palette).forEach((key, index) => {
-                const color = palette[key];
-                const colorName = isArray ? `Shade${index + 1}` : key;
+            const payload = JSON.parse(msg.payload);
+            const colors = typeof payload.colors === "string"
+                ? JSON.parse(payload.colors)
+                : payload.colors;
+            const isArray = Array.isArray(colors);
+            Object.keys(colors).forEach((key, index) => {
+                const color = colors[key];
+                const name = payload.name || "Shade";
+                const colorName = isArray ? `${name}${index + 1}` : key;
                 const shade = createRect({
-                    width: height * 2,
+                    width: height * 1.5,
                     height,
                     title: colorName,
                     value: color,
@@ -135,7 +139,7 @@ figma.ui.onmessage = (msg) => __awaiter(this, void 0, void 0, function* () {
         catch (e) {
             console.error(e);
         }
-        frame.resize(height * 2, frame.height);
+        frame.resize(frame.width, 130);
         nodes.push(frame);
         figma.currentPage.selection = nodes;
         figma.viewport.scrollAndZoomIntoView(nodes);

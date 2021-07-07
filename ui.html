@@ -1,4 +1,3 @@
-
 <div class="container">
   <div class="vStack-16">
     <div>
@@ -8,7 +7,9 @@
     <form class="vStack-16">
       <div class="vStack-8">
         <label for="input">Input</label>
-        <textarea id="input" placeholder="JSON here..." rows="14" spellcheck="false"></textarea>
+        <textarea id="colorsInput" required placeholder="JSON here..." rows="14" spellcheck="false"></textarea>
+        <label for="name">Color name</label>
+        <input id="colorName" type="text" placeholder="Tomato" />
       </div>
       <div class="hStack-16">
         <button class="button--primary" type="submit" id="create">Generate Palette</button>
@@ -20,16 +21,28 @@
   
   document.querySelector('form').onsubmit = (e) => {
     e.preventDefault();
-    const input = document.getElementById('input');
-    try {
-      const json = JSON.parse(input.value);
-      
-      parent.postMessage({ pluginMessage: { type: 'generate-palette', payload: input.value } }, '*')
-    } catch (error) {
-      const json = JSON.stringify(input.value)
-      const colors = json.match(/(#[\w\d]{6})/ig)
+    const colorsInput = document.getElementById('colorsInput');
+    const colorNameInput = document.getElementById('colorName');
 
-      parent.postMessage({ pluginMessage: { type: 'generate-palette', payload: JSON.stringify(colors) } }, '*')
+    let payload = {
+      name: colorNameInput.value,
+    }
+
+    try {
+      const json = JSON.parse(colorsInput.value);
+
+      payload.colors = colorsInput.value
+      
+      parent.postMessage({ pluginMessage: { type: 'generate-palette', payload: JSON.stringify(payload) } }, '*')
+    } catch (error) {
+      // TODO: error handling
+      // This handles the case where the user pastes a JSON string, but it's not valid JSON
+      const json = JSON.stringify(colorsInput.value)
+      const matchedColors = json.match(/(#[\w\d]{6})/ig)
+
+      payload.colors =  matchedColors
+
+      parent.postMessage({ pluginMessage: { type: 'generate-palette', payload: JSON.stringify(payload) } }, '*')
     }
   }
   
@@ -42,6 +55,8 @@
     body {
       --text-heading: #11181c;
       --text-body: #687076;
+      --gray-base: #889096;
+      --gray-light: #d7dbdf;
 
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -83,17 +98,25 @@
       color: var(--text-heading);
     }
 
-    textarea {
+    textarea, input {
       display: block;
       width: 100%;
-      resize: vertical;
-      font-family: monospace;
+      font-family: inherit;
       font-size: 14px;
-      color: var(--text-body);
+      color: var(--text-heading);
       padding: 8px;
       border-radius: 4px;
-      box-shadow: inset 0 0 0 1px #d7dbdf;
+      box-shadow: inset 0 0 0 1px var(--gray-light);
       border: none;
+    }
+
+    textarea::placeholder, input::placeholder {
+      color: var(--gray-base);
+    }
+
+    textarea {
+      resize: vertical;
+      font-family: monospace;
     }
 
     button {
