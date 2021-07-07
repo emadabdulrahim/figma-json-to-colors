@@ -7,6 +7,62 @@
 
 // This shows the HTML page in "ui.html".
 
+const SWATCH_WIDTH = 150
+const SWATCH_HEIGHT = 100
+
+const SWATCH_FRAME_PADDING = 12
+const SWATCH_FRAME_WIDTH = SWATCH_WIDTH + SWATCH_FRAME_PADDING * 2
+const SWATCH_FRAME_HEIGHT = SWATCH_HEIGHT + 40 + SWATCH_FRAME_PADDING * 2
+
+const createSwatchFrame = () => {
+  const frame = figma.createFrame()
+  setPadding(frame, SWATCH_FRAME_PADDING)
+
+  frame.cornerRadius = 4
+  frame.cornerSmoothing = 1
+  frame.itemSpacing = 12
+  frame.layoutMode = "VERTICAL"
+  frame.clipsContent = false
+
+  return frame
+}
+
+const createTextFrame = () => {
+  const frame = figma.createFrame()
+  frame.layoutMode = "HORIZONTAL"
+  frame.counterAxisSizingMode = "AUTO"
+  frame.primaryAxisAlignItems = "SPACE_BETWEEN"
+  frame.counterAxisAlignItems = "CENTER"
+
+  return frame
+}
+
+const createColorValueFrame = () => {
+  const frame = figma.createFrame()
+  setPadding(frame, 4)
+
+  frame.cornerRadius = 2
+  frame.cornerSmoothing = 1
+  frame.fills = [
+    {
+      type: "SOLID",
+      color: { r: 248 / 255, g: 249 / 255, b: 250 / 255 },
+    },
+  ]
+
+  frame.layoutMode = "HORIZONTAL"
+  frame.counterAxisSizingMode = "AUTO"
+
+  return frame
+}
+
+const setPadding = (node, padding) => {
+  node.paddingLeft = padding
+  node.paddingRight = padding
+  node.paddingTop = padding
+  node.paddingBottom = padding
+}
+
 function hexToRGB(h) {
   let r = 0,
     g = 0,
@@ -43,27 +99,6 @@ figma.showUI(__html__, {
 figma.ui.onmessage = async (msg) => {
   // One way of distinguishing between different types of messages sent from
   // your HTML page is to use an object with a "type" property like this.
-  if (msg.type === "create-rectangles") {
-    const nodes: SceneNode[] = []
-    const size = 300
-    for (let i = 0; i < msg.count; i++) {
-      // const rect = figma.createRectangle()
-      const rect = figma.createFrame()
-      rect.x = i * (size + 20)
-      rect.fills = [{ type: "SOLID", color: { r: 1, g: 0.5, b: 0 } }]
-      rect.resize(size, 100)
-      rect.cornerSmoothing = 0
-      rect.cornerRadius = 10
-      figma.currentPage.appendChild(rect)
-      const component = figma.createComponent()
-      component.appendChild(rect)
-      component.resize(size, 100)
-      nodes.push(component)
-    }
-    figma.currentPage.selection = nodes
-    figma.viewport.scrollAndZoomIntoView(nodes)
-  }
-
   function createText({ text }) {
     const textNode = figma.createText()
     textNode.characters = text
@@ -71,13 +106,14 @@ figma.ui.onmessage = async (msg) => {
     return textNode
   }
 
-  function createRect({ width, height, color, value, title }: any) {
-    const container = figma.createFrame()
-    const infoFrame = figma.createFrame()
-    container.layoutMode = "VERTICAL"
-    container.clipsContent = false
+  function createSwatch({ width, height, color, value, title }: any) {
+    const swatchFrame = createSwatchFrame()
+    const textFrame = createTextFrame()
+    const colorValueFrame = createColorValueFrame()
+
     const rect = figma.createRectangle()
-    rect.resize(width, height)
+    rect.cornerRadius = 2
+    rect.cornerSmoothing = 1
     rect.fills = [
       {
         type: "SOLID",
@@ -96,30 +132,38 @@ figma.ui.onmessage = async (msg) => {
         spread: 1,
       },
     ]
-    infoFrame.layoutMode = "HORIZONTAL"
-    infoFrame.paddingLeft = 8
-    infoFrame.paddingRight = 8
-    infoFrame.paddingBottom = 8
-    infoFrame.paddingTop = 8
-    infoFrame.primaryAxisAlignItems = "SPACE_BETWEEN"
-    infoFrame.counterAxisSizingMode = "AUTO"
-    infoFrame.appendChild(createText({ text: title }))
-    infoFrame.appendChild(createText({ text: value }))
-    container.appendChild(rect)
-    container.appendChild(infoFrame)
-    container.resize(width, container.height)
-    infoFrame.resize(container.width, infoFrame.height)
-    return container
+
+    rect.resize(width, height)
+
+    const valueText = createText({ text: value })
+    valueText.fontName = { family: "Monaco", style: "Regular" }
+    valueText.fills = [
+      {
+        type: "SOLID",
+        color: { r: 104 / 255, g: 112 / 255, b: 118 / 255 },
+      },
+    ]
+    colorValueFrame.appendChild(valueText)
+
+    textFrame.appendChild(createText({ text: title }))
+    textFrame.appendChild(colorValueFrame)
+
+    swatchFrame.appendChild(rect)
+    swatchFrame.appendChild(textFrame)
+    swatchFrame.resize(SWATCH_FRAME_WIDTH, swatchFrame.height)
+
+    textFrame.resize(width, textFrame.height)
+    return swatchFrame
   }
 
   if (msg.type === "generate-palette") {
     const nodes: SceneNode[] = []
     await figma.loadFontAsync({ family: "Roboto", style: "Regular" })
+    await figma.loadFontAsync({ family: "Monaco", style: "Regular" })
     const frame = figma.createFrame()
     frame.layoutMode = "HORIZONTAL"
-    frame.itemSpacing = 24
+    frame.itemSpacing = 12
     frame.fills = []
-    const height = 100
 
     try {
       const payload = JSON.parse(msg.payload)
@@ -135,19 +179,19 @@ figma.ui.onmessage = async (msg) => {
         const name = payload.name || "Shade"
         const colorName = isArray ? `${name}${index + 1}` : key
 
-        const shade = createRect({
-          width: height * 1.5,
-          height,
+        const swatch = createSwatch({
+          width: SWATCH_WIDTH,
+          height: SWATCH_HEIGHT,
           title: colorName,
           value: color,
           color: hexToRGB(color),
         })
-        frame.appendChild(shade)
+        frame.appendChild(swatch)
       })
     } catch (e) {
       console.error(e)
     }
-    frame.resize(frame.width, 130)
+    frame.resize(frame.width, SWATCH_FRAME_HEIGHT)
 
     nodes.push(frame)
     figma.currentPage.selection = nodes
